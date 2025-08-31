@@ -1,0 +1,220 @@
+{% load static %}
+{% load i18n %}
+<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{% trans "Stock Chart Web - Predict & Profit" %}{% endblock %}</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="data:image/x-icon;base64,AAABAAEAEBAQAAEABAAoAQAAFgAAACgAAAAQAAAAIAAAAAEABAAAAAAAgAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAD/AADsAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAREQAAAAAAEREQAAAAABERAAAAAAAREQAAAAAAEREAAAAAAAERAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAABAAAAAQAAAAAAA">
+    
+    <!-- CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="{% load static %}{% static 'css/main.css' %}" rel="stylesheet">
+    
+    <!-- TradingView Lightweight Charts -->
+    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'charts:home' %}">
+                <i class="fas fa-chart-line me-2"></i>Stock Chart Web
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'charts:home' %}">
+                            <i class="fas fa-home me-1"></i>{% trans "Home" %}
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'charts:chart_board' %}">
+                            <i class="fas fa-chart-bar me-1"></i>{% trans "Chart Board" %}
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'charts:predictions' %}">
+                            <i class="fas fa-crystal-ball me-1"></i>{% trans "My Predictions" %}
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'charts:rankings' %}">
+                            <i class="fas fa-trophy me-1"></i>{% trans "Rankings" %}
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'charts:contests' %}">
+                            <i class="fas fa-medal me-1"></i>{% trans "Contests" %}
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="servicesDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-coins me-1"></i>{% trans "Crypto Services" %}
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{% url 'loans:loans_home' %}">
+                                <i class="fas fa-handshake me-1"></i>{% trans "Collateral Loans" %}
+                            </a></li>
+                            <li><a class="dropdown-item" href="#">
+                                <i class="fas fa-exchange-alt me-1"></i>{% trans "Crypto Exchange" %}
+                            </a></li>
+                        </ul>
+                    </li>
+                </ul>
+                
+                <ul class="navbar-nav">
+                    {% if user.is_authenticated %}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-user me-1"></i>{{ user.email }}
+                                {% if user.is_premium %}
+                                    <span class="badge bg-warning text-dark ms-1">Premium</span>
+                                {% else %}
+                                    <span class="badge bg-secondary ms-1">Free ({{ user.free_visits_remaining }} left)</span>
+                                {% endif %}
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="{% url 'users:profile' %}">
+                                    <i class="fas fa-user-cog me-1"></i>{% trans "Profile" %}
+                                </a></li>
+                                <li><a class="dropdown-item" href="{% url 'payments:subscription_plans' %}">
+                                    <i class="fas fa-crown me-1"></i>{% trans "Upgrade to Premium" %}
+                                </a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="{% url 'users:logout' %}">
+                                    <i class="fas fa-sign-out-alt me-1"></i>{% trans "Logout" %}
+                                </a></li>
+                            </ul>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'users:login' %}">
+                                <i class="fas fa-sign-in-alt me-1"></i>{% trans "Login" %}
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'users:register' %}">
+                                <i class="fas fa-user-plus me-1"></i>{% trans "Register" %}
+                            </a>
+                        </li>
+                    {% endif %}
+                    
+                    <!-- Language Selector -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="languageDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-globe me-1"></i>EN
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#" data-lang="en">🇺🇸 English</a></li>
+                            <li><a class="dropdown-item" href="#" data-lang="ko">🇰🇷 한국어</a></li>
+                            <li><a class="dropdown-item" href="#" data-lang="ja">🇯🇵 日本語</a></li>
+                            <li><a class="dropdown-item" href="#" data-lang="zh">🇨🇳 中文</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Main Content -->
+    <main class="main-content">
+        {% if messages %}
+            <div class="container mt-4">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+        
+        {% block content %}{% endblock %}
+    </main>
+    
+    <!-- Footer -->
+    <footer class="bg-dark text-light py-5 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4">
+                    <h5><i class="fas fa-chart-line me-2"></i>Stock Chart Web</h5>
+                    <p>{% trans "Predict future stock prices with accuracy and compete with traders worldwide." %}</p>
+                    <div class="social-links">
+                        <a href="#" class="text-light me-3"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="text-light me-3"><i class="fab fa-facebook"></i></a>
+                        <a href="#" class="text-light me-3"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="text-light me-3"><i class="fab fa-linkedin"></i></a>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <h6>{% trans "Platform" %}</h6>
+                    <ul class="list-unstyled">
+                        <li><a href="#" class="text-light">{% trans "Features" %}</a></li>
+                        <li><a href="#" class="text-light">{% trans "Pricing" %}</a></li>
+                        <li><a href="#" class="text-light">{% trans "API" %}</a></li>
+                        <li><a href="#" class="text-light">{% trans "Security" %}</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-2">
+                    <h6>{% trans "Markets" %}</h6>
+                    <ul class="list-unstyled">
+                        <li><a href="#" class="text-light">{% trans "Cryptocurrencies" %}</a></li>
+                        <li><a href="#" class="text-light">{% trans "US Stocks" %}</a></li>
+                        <li><a href="#" class="text-light">{% trans "Korean Stocks" %}</a></li>
+                        <li><a href="#" class="text-light">{% trans "Global Markets" %}</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-2">
+                    <h6>{% trans "Support" %}</h6>
+                    <ul class="list-unstyled">
+                        <li><a href="#" class="text-light">{% trans "Help Center" %}</a></li>
+                        <li><a href="#" class="text-light">{% trans "Contact Us" %}</a></li>
+                        <li><a href="#" class="text-light">{% trans "Community" %}</a></li>
+                        <li><a href="#" class="text-light">{% trans "Bug Reports" %}</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-2">
+                    <h6>{% trans "Legal" %}</h6>
+                    <ul class="list-unstyled">
+                        <li><a href="#" class="text-light">{% trans "Privacy Policy" %}</a></li>
+                        <li><a href="#" class="text-light">{% trans "Terms of Service" %}</a></li>
+                        <li><a href="#" class="text-light">{% trans "Cookie Policy" %}</a></li>
+                        <li><a href="#" class="text-light">{% trans "Disclaimer" %}</a></li>
+                    </ul>
+                </div>
+            </div>
+            <hr class="my-4">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <p class="mb-0">{% trans "&copy; 2025 Stock Chart Web. All rights reserved." %}</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <small class="text-muted">
+                        {% trans "Real-time data provided by various market data providers." %}
+                        <br>{% trans "Past performance does not guarantee future results." %}
+                    </small>
+                </div>
+            </div>
+        </div>
+    </footer>
+    
+    <!-- JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="{% load static %}{% static 'js/main.js' %}"></script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

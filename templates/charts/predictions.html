@@ -1,0 +1,556 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Predictions - Stock Chart Web{% endblock %}
+
+{% block extra_css %}
+<style>
+    .prediction-card {
+        border-radius: 15px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .prediction-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+    
+    .status-badge {
+        font-size: 0.8rem;
+        padding: 0.3rem 0.8rem;
+        border-radius: 20px;
+        font-weight: 600;
+    }
+    
+    .status-pending {
+        background: linear-gradient(45deg, #ffc107, #ffeb3b);
+        color: #333;
+    }
+    
+    .status-completed {
+        background: linear-gradient(45deg, #28a745, #4caf50);
+        color: white;
+    }
+    
+    .status-expired {
+        background: linear-gradient(45deg, #dc3545, #f44336);
+        color: white;
+    }
+    
+    .accuracy-circle {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        color: white;
+        margin: 0 auto;
+    }
+    
+    .accuracy-high { background: linear-gradient(45deg, #28a745, #4caf50); }
+    .accuracy-medium { background: linear-gradient(45deg, #ffc107, #ff9800); }
+    .accuracy-low { background: linear-gradient(45deg, #dc3545, #f44336); }
+    
+    .stats-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 15px;
+        color: white;
+        padding: 1.5rem;
+        text-align: center;
+    }
+    
+    .create-prediction-form {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+    
+    .market-select {
+        border-radius: 10px;
+        border: 2px solid #e9ecef;
+        transition: border-color 0.3s ease;
+    }
+    
+    .market-select:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+    
+    .price-display {
+        font-size: 1.2rem;
+        font-weight: bold;
+        color: #333;
+    }
+    
+    .price-up { color: #28a745; }
+    .price-down { color: #dc3545; }
+    
+    .confidence-slider {
+        background: linear-gradient(to right, #dc3545 0%, #ffc107 50%, #28a745 100%);
+        height: 8px;
+        border-radius: 5px;
+        outline: none;
+        -webkit-appearance: none;
+        appearance: none;
+    }
+    
+    .confidence-slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: #667eea;
+        cursor: pointer;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    }
+    
+    .confidence-slider::-moz-range-thumb {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: #667eea;
+        cursor: pointer;
+        border: none;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <!-- Sidebar with Stats and Create Form -->
+        <div class="col-lg-4">
+            <!-- User Stats -->
+            <div class="stats-card mb-4">
+                <h4 class="mb-3"><i class="fas fa-chart-line me-2"></i>Your Performance</h4>
+                <div class="row text-center">
+                    <div class="col-4">
+                        <h2 class="mb-1">{{ total_predictions }}</h2>
+                        <small>Total Predictions</small>
+                    </div>
+                    <div class="col-4">
+                        <h2 class="mb-1">{{ correct_predictions }}</h2>
+                        <small>Correct</small>
+                    </div>
+                    <div class="col-4">
+                        <h2 class="mb-1">{{ accuracy_rate }}%</h2>
+                        <small>Accuracy</small>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Create New Prediction Form -->
+            <div class="create-prediction-form">
+                <h5 class="mb-3"><i class="fas fa-plus-circle me-2"></i>Create New Prediction</h5>
+                <form id="predictionForm">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="market" class="form-label">Select Market</label>
+                        <select class="form-select market-select" id="market" name="market" required>
+                            <option value="">Choose a stock/crypto...</option>
+                            <!-- Markets will be loaded via JavaScript -->
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Current Price</label>
+                        <div class="price-display" id="currentPrice">Select a market first</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="predictedPrice" class="form-label">Predicted Price</label>
+                        <input type="number" class="form-control" id="predictedPrice" name="predicted_price" step="0.0001" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="targetDate" class="form-label">Target Date</label>
+                        <input type="date" class="form-control" id="targetDate" name="target_date" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="confidence" class="form-label">Confidence Level: <span id="confidenceValue">50</span>%</label>
+                        <input type="range" class="form-range confidence-slider" id="confidence" name="confidence_level" min="1" max="100" value="50">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">Notes (Optional)</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="3" placeholder="Share your reasoning..."></textarea>
+                    </div>
+                    
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="isPublic" name="is_public" checked>
+                        <label class="form-check-label" for="isPublic">
+                            Make this prediction public
+                        </label>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-crystal-ball me-2"></i>Create Prediction
+                    </button>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Main Content - Predictions List -->
+        <div class="col-lg-8">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-list me-2"></i>My Predictions</h2>
+                <div class="btn-group" role="group">
+                    <input type="radio" class="btn-check" name="statusFilter" id="all" value="all" checked>
+                    <label class="btn btn-outline-primary" for="all">All</label>
+                    
+                    <input type="radio" class="btn-check" name="statusFilter" id="pending" value="pending">
+                    <label class="btn btn-outline-warning" for="pending">Pending</label>
+                    
+                    <input type="radio" class="btn-check" name="statusFilter" id="completed" value="completed">
+                    <label class="btn btn-outline-success" for="completed">Completed</label>
+                    
+                    <input type="radio" class="btn-check" name="statusFilter" id="expired" value="expired">
+                    <label class="btn btn-outline-danger" for="expired">Expired</label>
+                </div>
+            </div>
+            
+            <!-- Predictions List -->
+            <div id="predictionsList">
+                {% for prediction in predictions %}
+                <div class="card prediction-card mb-3" data-status="{{ prediction.status }}">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <!-- Market Info -->
+                            <div class="col-md-3">
+                                <h5 class="card-title mb-1">{{ prediction.market.symbol }}</h5>
+                                <p class="text-muted mb-0">{{ prediction.market.name }}</p>
+                                <span class="status-badge status-{{ prediction.status }}">
+                                    {{ prediction.get_status_display }}
+                                </span>
+                            </div>
+                            
+                            <!-- Price Info -->
+                            <div class="col-md-4">
+                                <div class="row text-center">
+                                    <div class="col-6">
+                                        <small class="text-muted">Current</small>
+                                        <div class="price-display">${{ prediction.current_price }}</div>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-muted">Predicted</small>
+                                        <div class="price-display {% if prediction.predicted_price > prediction.current_price %}price-up{% else %}price-down{% endif %}">
+                                            ${{ prediction.predicted_price }}
+                                        </div>
+                                    </div>
+                                </div>
+                                {% if prediction.actual_price %}
+                                <div class="text-center mt-2">
+                                    <small class="text-muted">Actual</small>
+                                    <div class="price-display">${{ prediction.actual_price }}</div>
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Accuracy & Stats -->
+                            <div class="col-md-2 text-center">
+                                {% if prediction.accuracy_percentage is not None %}
+                                    <div class="accuracy-circle {% if prediction.accuracy_percentage >= 80 %}accuracy-high{% elif prediction.accuracy_percentage >= 50 %}accuracy-medium{% else %}accuracy-low{% endif %}">
+                                        {{ prediction.accuracy_percentage|floatformat:0 }}%
+                                    </div>
+                                {% else %}
+                                    <div class="text-muted">
+                                        <i class="fas fa-clock fa-2x"></i>
+                                        <div>Pending</div>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Details & Actions -->
+                            <div class="col-md-3">
+                                <div class="mb-2">
+                                    <small class="text-muted">Target Date:</small><br>
+                                    <strong>{{ prediction.target_date|date:"M d, Y" }}</strong>
+                                </div>
+                                <div class="mb-2">
+                                    <small class="text-muted">Confidence:</small>
+                                    <div class="progress" style="height: 6px;">
+                                        <div class="progress-bar" role="progressbar" data-width="{{ prediction.confidence_level }}"></div>
+                                    </div>
+                                    <small>{{ prediction.confidence_level }}%</small>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <small class="text-muted">
+                                        <i class="fas fa-eye"></i> {{ prediction.views_count }}
+                                        <i class="fas fa-heart ms-2"></i> {{ prediction.likes_count }}
+                                    </small>
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                            <i class="fas fa-ellipsis-v"></i>
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item" href="#" onclick="viewPrediction('{{ prediction.id }}')"><i class="fas fa-eye me-2"></i>View Details</a></li>
+                                            {% if prediction.status == 'pending' %}
+                                            <li><a class="dropdown-item" href="#" onclick="editPrediction('{{ prediction.id }}')"><i class="fas fa-edit me-2"></i>Edit</a></li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li><a class="dropdown-item text-danger" href="#" onclick="deletePrediction('{{ prediction.id }}')"><i class="fas fa-trash me-2"></i>Delete</a></li>
+                                            {% endif %}
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {% if prediction.notes %}
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <div class="alert alert-light">
+                                    <strong>Notes:</strong> {{ prediction.notes }}
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center py-5">
+                    <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
+                    <h4 class="text-muted">No Predictions Yet</h4>
+                    <p class="text-muted">Start making your first prediction to track your accuracy!</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Prediction Detail Modal -->
+<div class="modal fade" id="predictionDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Prediction Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="predictionDetailBody">
+                <!-- Content will be loaded via JavaScript -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Load markets for the form
+    loadMarkets();
+    
+    // Initialize form handlers
+    initializePredictionForm();
+    
+    // Initialize filters
+    initializeFilters();
+    
+    // Initialize progress bars
+    initializeProgressBars();
+    
+    // Update confidence value display
+    document.getElementById('confidence').addEventListener('input', function() {
+        document.getElementById('confidenceValue').textContent = this.value;
+    });
+    
+    // Set minimum target date to tomorrow
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    document.getElementById('targetDate').min = tomorrow.toISOString().split('T')[0];
+});
+
+function initializeProgressBars() {
+    // Set the width of progress bars based on data-width attribute
+    document.querySelectorAll('.progress-bar[data-width]').forEach(bar => {
+        const width = bar.getAttribute('data-width');
+        bar.style.width = width + '%';
+    });
+}
+
+function loadMarkets() {
+    fetch('/api/charts/markets/')
+        .then(response => response.json())
+        .then(data => {
+            const marketSelect = document.getElementById('market');
+            marketSelect.innerHTML = '<option value="">Choose a stock/crypto...</option>';
+            
+            data.markets.forEach(market => {
+                const option = document.createElement('option');
+                option.value = market.id;
+                option.textContent = `${market.symbol} - ${market.name}`;
+                option.dataset.symbol = market.symbol;
+                option.dataset.price = market.current_price;
+                marketSelect.appendChild(option);
+            });
+        })
+        .catch(error => console.error('Error loading markets:', error));
+}
+
+function initializePredictionForm() {
+    const form = document.getElementById('predictionForm');
+    const marketSelect = document.getElementById('market');
+    
+    // Load current price when market is selected
+    marketSelect.addEventListener('change', function() {
+        if (this.value) {
+            const selectedOption = this.options[this.selectedIndex];
+            const symbol = selectedOption.dataset.symbol;
+            const price = selectedOption.dataset.price;
+            document.getElementById('currentPrice').textContent = `$${parseFloat(price).toFixed(2)}`;
+        } else {
+            document.getElementById('currentPrice').textContent = 'Select a market first';
+        }
+    });
+    
+    // Handle form submission
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        submitPrediction();
+    });
+}
+
+function submitPrediction() {
+    const form = document.getElementById('predictionForm');
+    const formData = new FormData(form);
+    
+    fetch('/api/charts/predictions/create/', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Show success message
+            showAlert('Prediction created successfully!', 'success');
+            // Reset form
+            form.reset();
+            document.getElementById('confidenceValue').textContent = '50';
+            document.getElementById('currentPrice').textContent = 'Select a market first';
+            // Reload predictions list
+            location.reload();
+        } else {
+            showAlert(data.message || 'Failed to create prediction', 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('An error occurred. Please try again.', 'danger');
+    });
+}
+
+function initializeFilters() {
+    const filterButtons = document.querySelectorAll('input[name="statusFilter"]');
+    
+    filterButtons.forEach(button => {
+        button.addEventListener('change', function() {
+            filterPredictions(this.value);
+        });
+    });
+}
+
+function filterPredictions(status) {
+    const predictions = document.querySelectorAll('.prediction-card');
+    
+    predictions.forEach(card => {
+        if (status === 'all' || card.dataset.status === status) {
+            card.style.display = 'block';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+}
+
+function viewPrediction(predictionId) {
+    // Load prediction details in modal
+    fetch(`/api/charts/predictions/${predictionId}/`)
+        .then(response => response.json())
+        .then(data => {
+            // Populate modal with prediction details
+            document.getElementById('predictionDetailBody').innerHTML = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Market Information</h6>
+                        <p><strong>Symbol:</strong> ${data.market.symbol}</p>
+                        <p><strong>Name:</strong> ${data.market.name}</p>
+                        <p><strong>Type:</strong> ${data.market.market_type}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Prediction Details</h6>
+                        <p><strong>Current Price:</strong> $${data.current_price}</p>
+                        <p><strong>Predicted Price:</strong> $${data.predicted_price}</p>
+                        <p><strong>Target Date:</strong> ${new Date(data.target_date).toLocaleDateString()}</p>
+                        <p><strong>Confidence:</strong> ${data.confidence_level}%</p>
+                    </div>
+                </div>
+                ${data.notes ? `<div class="mt-3"><h6>Notes</h6><p>${data.notes}</p></div>` : ''}
+            `;
+            
+            // Show modal
+            new bootstrap.Modal(document.getElementById('predictionDetailModal')).show();
+        })
+        .catch(error => {
+            console.error('Error loading prediction details:', error);
+            showAlert('Failed to load prediction details', 'danger');
+        });
+}
+
+function editPrediction(predictionId) {
+    // Implement edit functionality
+    showAlert('Edit functionality coming soon!', 'info');
+}
+
+function deletePrediction(predictionId) {
+    if (confirm('Are you sure you want to delete this prediction?')) {
+        fetch(`/api/charts/predictions/${predictionId}/`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert('Prediction deleted successfully!', 'success');
+                location.reload();
+            } else {
+                showAlert('Failed to delete prediction', 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('An error occurred. Please try again.', 'danger');
+        });
+    }
+}
+
+function showAlert(message, type) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(alertDiv);
+    
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
+</script>
+{% endblock %}

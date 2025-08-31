@@ -1,0 +1,66 @@
+# Django Core
+Django==5.2.5
+django-allauth==0.57.0
+django-cors-headers==4.3.1
+django-rest-framework==0.1.0
+djangorestframework==3.14.0
+psycopg2-binary==2.9.7
+python-decouple==3.8
+whitenoise==6.5.0
+
+# Database & Caching
+redis==5.0.0
+django-redis==5.3.0
+celery==5.3.1
+
+# Market Data APIs
+yfinance==0.2.21
+requests==2.31.0
+alpha-vantage==2.3.1
+
+# Payment Processing
+stripe==6.4.0
+paypalrestsdk==1.13.3
+
+# Social Authentication & APIs
+google-auth==2.22.0
+google-auth-oauthlib==1.0.0
+google-auth-httplib2==0.1.0
+tweepy==4.14.0
+facebook-sdk==3.1.0
+
+# Image Processing
+Pillow==10.0.0
+
+# Utilities
+python-dateutil==2.8.2
+pytz==2023.3
+uuid==1.30
+
+# Development & Testing
+django-debug-toolbar==4.2.0
+coverage==7.3.0
+
+# Internationalization
+django-rosetta==0.9.9
+
+# File Handling
+boto3==1.28.55  # For AWS S3 storage
+django-storages==1.13.2
+
+# Monitoring & Logging
+sentry-sdk==1.30.0
+
+# Task Queue
+kombu==5.3.1
+
+# Web Server (for production)
+gunicorn==21.2.0
+
+# Environment
+python-dotenv==1.0.0
+
+# Additional utilities
+python-slugify==8.0.1
+bleach==6.0.0  # For sanitizing user input
+markdown==3.4.4  # For rich text processing

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maintenance Mode - Stock Chart Prediction</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: white;
+        }
+        
+        .maintenance-container {
+            text-align: center;
+            max-width: 600px;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        .maintenance-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+            opacity: 0.8;
+        }
+        
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            font-weight: 300;
+        }
+        
+        .subtitle {
+            font-size: 1.2em;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+        
+        .message {
+            font-size: 1.1em;
+            line-height: 1.6;
+            margin-bottom: 40px;
+            opacity: 0.8;
+        }
+        
+        .features {
+            text-align: left;
+            display: inline-block;
+            margin: 20px 0;
+        }
+        
+        .features li {
+            margin: 10px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+        
+        .features li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #4CAF50;
+            font-weight: bold;
+        }
+        
+        .contact-info {
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .contact-info a {
+            color: #FFD700;
+            text-decoration: none;
+        }
+        
+        .contact-info a:hover {
+            text-decoration: underline;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="maintenance-container">
+        <div class="maintenance-icon pulse">🔧</div>
+        <h1>We're Upgrading!</h1>
+        <div class="subtitle">Stock Chart Prediction Platform</div>
+        
+        <div class="message">
+            We're currently performing scheduled maintenance to bring you exciting new features and improvements. 
+            Our team is working hard to get everything back online as soon as possible.
+        </div>
+        
+        <div class="message">
+            <strong>What's Coming:</strong>
+            <ul class="features">
+                <li>Enhanced AI-powered predictions</li>
+                <li>New international stock markets</li>
+                <li>Improved contest system</li>
+                <li>Better mobile experience</li>
+                <li>Advanced analytics dashboard</li>
+            </ul>
+        </div>
+        
+        <div class="message">
+            Expected downtime: <strong>1-2 hours</strong><br>
+            We'll be back shortly with an even better trading experience!
+        </div>
+        
+        <div class="contact-info">
+            <p>Need immediate assistance?</p>
+            <p>Email us at: <a href="mailto:support@stockchartprediction.com">support@stockchartprediction.com</a></p>
+            <p>Follow us for updates: <a href="#" target="_blank">@StockChartPred</a></p>
+        </div>
+    </div>
+</body>
+</html>

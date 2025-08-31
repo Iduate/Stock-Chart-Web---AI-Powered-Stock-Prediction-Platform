@@ -1,0 +1,470 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "Stock Chart Web - AI-Powered Stock Predictions" %}{% endblock %}
+
+{% block extra_css %}
+<style>
+.hero-section {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 100px 0 80px;
+    margin-top: -76px;
+    padding-top: 176px;
+}
+
+.feature-card {
+    height: 100%;
+    transition: transform 0.3s ease;
+    border: none;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+.feature-card:hover {
+    transform: translateY(-10px);
+}
+
+.stats-section {
+    background: #f8f9fa;
+    padding: 60px 0;
+}
+
+.stat-number {
+    font-size: 3rem;
+    font-weight: bold;
+    color: #2c3e50;
+}
+
+.trending-section {
+    padding: 80px 0;
+}
+
+.trending-card {
+    background: white;
+    border-radius: 15px;
+    padding: 30px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    height: 100%;
+}
+
+.market-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.market-item:last-child {
+    border-bottom: none;
+}
+
+.prediction-card {
+    padding: 20px;
+    border: 1px solid #e9ecef;
+    border-radius: 10px;
+    margin-bottom: 15px;
+    background: white;
+}
+
+.user-badge {
+    background: #007bff;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.leaderboard-card {
+    background: linear-gradient(145deg, #f8f9fa, #ffffff);
+}
+
+.leaderboard-item {
+    border-bottom: 1px solid #e9ecef;
+}
+
+.leaderboard-item:last-child {
+    border-bottom: none;
+}
+
+.rank-badge {
+    width: 40px;
+    text-align: center;
+}
+
+.accuracy-badge {
+    font-size: 0.875rem;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 20px;
+}
+
+.accuracy-high { background-color: #28a745; }
+.accuracy-medium { background-color: #ffc107; color: #000; }
+.accuracy-low { background-color: #dc3545; }
+
+.cta-section {
+    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+    color: white;
+    padding: 80px 0;
+}
+
+.stock-item:last-child {
+    border-bottom: none;
+}
+
+.price-change-positive {
+    color: #27ae60;
+}
+
+.price-change-negative {
+    color: #e74c3c;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h1 class="display-4 fw-bold mb-4">{% trans "Predict Stock Prices with AI" %}</h1>
+                <p class="lead mb-4">{% trans "Join thousands of traders making accurate predictions and earning rewards in our AI-powered trading platform." %}</p>
+                <div class="d-flex gap-3">
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'charts:chart_board' %}" class="btn btn-light btn-lg">
+                            <i class="fas fa-chart-line me-2"></i>{% trans "Start Trading" %}
+                        </a>
+                        <a href="{% url 'users:profile' %}" class="btn btn-outline-light btn-lg">
+                            <i class="fas fa-user me-2"></i>{% trans "My Profile" %}
+                        </a>
+                    {% else %}
+                        <a href="{% url 'users:register' %}" class="btn btn-light btn-lg">
+                            <i class="fas fa-rocket me-2"></i>{% trans "Get Started Free" %}
+                        </a>
+                        <a href="{% url 'users:login' %}" class="btn btn-outline-light btn-lg">
+                            <i class="fas fa-sign-in-alt me-2"></i>{% trans "Sign In" %}
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-lg-6 text-center">
+                <div class="hero-chart-preview bg-white bg-opacity-10 rounded-3 p-4">
+                    <i class="fas fa-chart-line fa-5x mb-3 text-warning"></i>
+                    <h5>{% trans "Real-time Market Analysis" %}</h5>
+                    <p class="mb-0">{% trans "Professional-grade charts and AI insights" %}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Stats Section -->
+<section class="stats-section">
+    <div class="container">
+        <div class="row text-center">
+            <div class="col-md-3 mb-4">
+                <div class="stat-number">{{ total_users|default:"10,000+" }}</div>
+                <div class="h6 text-muted">{% trans "Active Traders" %}</div>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="stat-number">{{ total_predictions|default:"50,000+" }}</div>
+                <div class="h6 text-muted">{% trans "Predictions Made" %}</div>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="stat-number">{{ average_accuracy|default:"73%" }}</div>
+                <div class="h6 text-muted">{% trans "Average Accuracy" %}</div>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="stat-number">${{ total_rewards|default:"1.2M+" }}</div>
+                <div class="h6 text-muted">{% trans "Rewards Paid" %}</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Trending Markets Section -->
+<section class="trending-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="trending-card">
+                    <h2 class="h3 mb-4">
+                        <i class="fas fa-trending-up text-success me-2"></i>{% trans "Trending Markets" %}
+                    </h2>
+                    <div id="trendingMarkets">
+                        <div class="text-center">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">{% trans "Loading..." %}</span>
+                            </div>
+                            <div class="mt-2">{% trans "Loading market data..." %}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="trending-card">
+                    <h3 class="h4 mb-4">
+                        <i class="fas fa-trophy text-warning me-2"></i>{% trans "Recent Predictions" %}
+                    </h3>
+                    <div class="prediction-list">
+                        {% for prediction in recent_predictions %}
+                            <div class="prediction-card">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="mb-1">{{ prediction.market.symbol }}</h6>
+                                        <p class="text-muted mb-2">{{ prediction.market.name }}</p>
+                                        <span class="badge bg-{% if prediction.prediction_type|lower == 'up' %}success{% else %}danger{% endif %}">
+                                            {{ prediction.prediction_type }} to ${{ prediction.target_price }}
+                                        </span>
+                                    </div>
+                                    <div class="text-end">
+                                        <div class="user-badge">{{ prediction.user.username }}</div>
+                                        <small class="text-muted d-block mt-1">
+                                            {{ prediction.created_at|timesince }} {% trans "ago" %}
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        {% empty %}
+                            <div class="text-center text-muted">
+                                <i class="fas fa-chart-line fa-2x mb-3"></i>
+                                <p>{% trans "No predictions yet. Be the first!" %}</p>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="display-5 fw-bold mb-3">{% trans "Why Choose Our Platform?" %}</h2>
+            <p class="lead text-muted">{% trans "Advanced AI-powered predictions with real rewards" %}</p>
+        </div>
+        <div class="row g-4">
+            <div class="col-md-6 col-lg-3">
+                <div class="feature-card card h-100 text-center p-4">
+                    <div class="feature-icon mb-3">
+                        <i class="fas fa-brain fa-3x text-primary"></i>
+                    </div>
+                    <h5 class="card-title">{% trans "AI-Powered Insights" %}</h5>
+                    <p class="card-text">{% trans "Advanced machine learning algorithms analyze market patterns to help you make better predictions." %}</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="feature-card card h-100 text-center p-4">
+                    <div class="feature-icon mb-3">
+                        <i class="fas fa-trophy fa-3x text-warning"></i>
+                    </div>
+                    <h5 class="card-title">{% trans "Real Rewards" %}</h5>
+                    <p class="card-text">{% trans "Earn actual money for accurate predictions. Top performers receive cash prizes and bonuses." %}</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="feature-card card h-100 text-center p-4">
+                    <div class="feature-icon mb-3">
+                        <i class="fas fa-users fa-3x text-success"></i>
+                    </div>
+                    <h5 class="card-title">{% trans "Social Trading" %}</h5>
+                    <p class="card-text">{% trans "Follow successful traders, share insights, and learn from the community's collective wisdom." %}</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="feature-card card h-100 text-center p-4">
+                    <div class="feature-icon mb-3">
+                        <i class="fas fa-chart-line fa-3x text-info"></i>
+                    </div>
+                    <h5 class="card-title">{% trans "Professional Charts" %}</h5>
+                    <p class="card-text">{% trans "TradingView integration provides institutional-grade charting tools and technical indicators." %}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Leaderboard Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+                <div class="text-center mb-5">
+                    <h2 class="display-5 fw-bold mb-3">
+                        <i class="fas fa-medal text-warning me-2"></i>{% trans "Top Performers" %}
+                    </h2>
+                    <p class="lead text-muted">{% trans "See who's leading the prediction accuracy rankings" %}</p>
+                </div>
+                <div class="leaderboard-card bg-white rounded-3 shadow p-4">
+                    <div class="row g-0">
+                        {% for leader in top_performers %}
+                            <div class="col-12">
+                                <div class="leaderboard-item d-flex align-items-center justify-content-between p-3 {% if forloop.counter <= 3 %}border-start border-5 border-warning{% endif %}">
+                                    <div class="d-flex align-items-center">
+                                        <div class="rank-badge me-3">
+                                            {% if forloop.counter == 1 %}
+                                                <i class="fas fa-crown text-warning"></i>
+                                            {% elif forloop.counter == 2 %}
+                                                <i class="fas fa-medal text-secondary"></i>
+                                            {% elif forloop.counter == 3 %}
+                                                <i class="fas fa-award text-warning"></i>
+                                            {% else %}
+                                                <span class="badge bg-light text-dark">#{{ forloop.counter }}</span>
+                                            {% endif %}
+                                        </div>
+                                        <div>
+                                            <h6 class="mb-0">{{ leader.user.username }}</h6>
+                                            <small class="text-muted d-block">
+                                                {{ leader.total_predictions }} {% trans "predictions" %}
+                                            </small>
+                                        </div>
+                                    </div>
+                                    <div class="text-end">
+                                        <div class="accuracy-badge accuracy-{% if leader.accuracy >= 80 %}high{% elif leader.accuracy >= 60 %}medium{% else %}low{% endif %} badge">
+                                            {{ leader.accuracy }}% {% trans "accuracy" %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% empty %}
+                            <div class="text-center text-muted py-4">
+                                <i class="fas fa-users fa-3x mb-3"></i>
+                                <p>{% trans "No leaderboard data yet. Start making predictions to compete!" %}</p>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="cta-section">
+    <div class="container text-center">
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+                <h2 class="display-5 fw-bold mb-4">{% trans "Ready to Start Winning?" %}</h2>
+                <p class="lead mb-5">{% trans "Join thousands of successful traders who are already earning money from their market predictions." %}</p>
+                {% if not user.is_authenticated %}
+                    <a href="{% url 'users:register' %}" class="btn btn-warning btn-lg me-3">
+                        <i class="fas fa-rocket me-2"></i>{% trans "Get Started Free" %}
+                    </a>
+                    <a href="{% url 'charts:chart_board' %}" class="btn btn-outline-light btn-lg">
+                        <i class="fas fa-eye me-2"></i>{% trans "View Demo" %}
+                    </a>
+                {% else %}
+                    <a href="{% url 'charts:predictions' %}" class="btn btn-warning btn-lg me-3">
+                        <i class="fas fa-crystal-ball me-2"></i>{% trans "Make Your First Prediction" %}
+                    </a>
+                    <a href="{% url 'payments:subscription_plans' %}" class="btn btn-outline-light btn-lg">
+                        <i class="fas fa-crown me-2"></i>{% trans "Upgrade to Premium" %}
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animate counters on scroll
+    const observerOptions = {
+        threshold: 0.5,
+        rootMargin: '0px 0px -100px 0px'
+    };
+    
+    const observer = new IntersectionObserver(function(entries) {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const counters = entry.target.querySelectorAll('.stat-number');
+                counters.forEach(counter => {
+                    animateCounter(counter);
+                });
+                observer.unobserve(entry.target);
+            }
+        });
+    }, observerOptions);
+    
+    const statsSection = document.querySelector('.stats-section');
+    if (statsSection) {
+        observer.observe(statsSection);
+    }
+    
+    // Load trending markets
+    loadTrendingMarkets();
+});
+
+function animateCounter(element) {
+    const target = parseInt(element.textContent.replace(/[^0-9]/g, '')) || 0;
+    const duration = 2000;
+    const increment = target / (duration / 16);
+    let current = 0;
+    
+    const timer = setInterval(() => {
+        current += increment;
+        if (current >= target) {
+            current = target;
+            clearInterval(timer);
+        }
+        
+        const suffix = element.textContent.match(/[^0-9]+$/)?.[0] || '';
+        element.textContent = Math.floor(current).toLocaleString() + suffix;
+    }, 16);
+}
+
+function loadTrendingMarkets() {
+    fetch('/api/charts/markets/?type=stocks', {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        credentials: 'same-origin'  // Include cookies for Django CSRF
+    })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            const container = document.getElementById('trendingMarkets');
+            if (data.markets && data.markets.length > 0) {
+                container.innerHTML = data.markets.slice(0, 5).map(market => `
+                    <div class="market-item">
+                        <div>
+                            <h6 class="mb-1">${market.symbol}</h6>
+                            <small class="text-muted">${market.name}</small>
+                        </div>
+                        <div class="text-end">
+                            <div class="fw-bold">$${market.current_price || 'N/A'}</div>
+                            <small class="price-change-${(market.price_change || 0) >= 0 ? 'positive' : 'negative'}">
+                                ${(market.price_change || 0) >= 0 ? '+' : ''}${(market.price_change || 0).toFixed(2)}%
+                            </small>
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                container.innerHTML = '<div class="text-center text-muted">No market data available</div>';
+            }
+        })
+        .catch(error => {
+            console.error('Error loading trending markets:', error);
+            const container = document.getElementById('trendingMarkets');
+            if (error.message.includes('403')) {
+                container.innerHTML = '<div class="text-center text-muted">Authentication required to load market data</div>';
+            } else {
+                container.innerHTML = '<div class="text-center text-muted">Failed to load market data. Please refresh the page.</div>';
+            }
+        });
+}
+</script>
+{% endblock %}
