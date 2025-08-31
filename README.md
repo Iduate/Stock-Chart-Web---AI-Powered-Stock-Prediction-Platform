@@ -142,7 +142,7 @@ A comprehensive web platform that combines real-time stock chart analysis with A
 
 8. **Run development server**
    ```bash
-   python manage.py runserver 8001
+   python manage.py runserver 8000
    ```
 
 9. **Access the application**
@@ -308,11 +308,6 @@ python manage.py migrate
 python manage.py createsuperuser
 python manage.py collectstatic
 ```
-
-### Admin Access
-- **URL**: http://127.0.0.1:8000/admin/
-- **Email**: davididuate11@gmail.com
-- **Password**: Iduate
 
 ## 📊 Features Implemented
 
