@@ -146,9 +146,9 @@ A comprehensive web platform that combines real-time stock chart analysis with A
    ```
 
 9. **Access the application**
-   - **Main App**: http://127.0.0.1:8001/
-   - **Admin Panel**: http://127.0.0.1:8001/admin/
-   - **Chart Board**: http://127.0.0.1:8001/chart-board/
+   - **Main App**: http://127.0.0.1:8000/
+   - **Admin Panel**: http://127.0.0.1:8000/admin/
+   - **Chart Board**: http://127.0.0.1:8000/chart-board/
 
 ## 📁 Project Structure
 
@@ -310,7 +310,7 @@ python manage.py collectstatic
 ```
 
 ### Admin Access
-- **URL**: http://127.0.0.1:8001/admin/
+- **URL**: http://127.0.0.1:8000/admin/
 - **Email**: davididuate11@gmail.com
 - **Password**: Iduate
 
@@ -348,7 +348,7 @@ python manage.py collectstatic
 ## 🧪 Testing
 
 ### Test the Application
-1. **Home Page**: Visit http://127.0.0.1:8001/
+1. **Home Page**: Visit http://127.0.0.1:8000/
 2. **Register**: Create new account at `/users/register/`
 3. **Chart Board**: View interactive charts at `/chart-board/`
 4. **API Testing**: Check `/api/charts/markets/?type=stocks`
@@ -486,7 +486,7 @@ fetch('/api/charts/predictions/', {
 ## 🐛 Troubleshooting
 
 ### Common Issues
-1. **Server Not Starting**: Check port 8001 availability
+1. **Server Not Starting**: Check port 8000 availability
 2. **Database Errors**: Verify PostgreSQL connection
 3. **API Errors**: Check Django logs
 4. **Chart Not Loading**: Verify JavaScript console
@@ -512,10 +512,7 @@ python manage.py runserver --verbosity=2
 
 For support and questions:
 - **Email**: davididuate11@gmail.com
-- **Admin Access**: http://127.0.0.1:8001/admin/
+- **Admin Access**: http://127.0.0.1:8000/admin/
 - **API Documentation**: Available in code comments
 - **GitHub Issues**: Create issues for bug reports
 
----
-
-**🎉 Congratulations! Your Stock Chart Web platform is now fully operational with complete frontend, API endpoints, and external data integration. Ready for production deployment!** 🎉
