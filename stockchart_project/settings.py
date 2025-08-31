@@ -33,7 +33,14 @@ SECRET_KEY = config('SECRET_KEY', default='django-insecure-f(wy2y3&l&2#!6%9oiznq
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=True, cast=bool)
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '*']
+# Railway deployment detection
+RAILWAY_ENVIRONMENT = config('RAILWAY_ENVIRONMENT', default=False, cast=bool)
+
+if RAILWAY_ENVIRONMENT:
+    ALLOWED_HOSTS = ['*']
+    DEBUG = False
+else:
+    ALLOWED_HOSTS = ['localhost', '127.0.0.1', '*']
 
 
 # Application definition

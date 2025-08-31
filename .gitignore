@@ -196,6 +196,9 @@ media/
 .env.test.local
 .env.production.local
 
+# But keep .env.example for reference
+!.env.example
+
 # Static files (if collected)
 /static/
 /staticfiles/
