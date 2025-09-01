@@ -15,10 +15,14 @@ from decouple import config
 import os
 import sys
 
-# Fix encoding issues on Windows
+# Fix encoding issues on Windows - only apply on Windows platform
 if sys.platform == 'win32':
-    import locale
-    locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
+    try:
+        import locale
+        locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
+    except:
+        # Ignore locale errors in production environments
+        pass
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -45,33 +49,58 @@ else:
 
 # Application definition
 
-INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'django.contrib.sites',
-    
-    # Third party apps
-    'rest_framework',
-    'corsheaders',
-    'allauth',
-    'allauth.account',
-    'allauth.socialaccount',
-    'allauth.socialaccount.providers.google',
-    'allauth.socialaccount.providers.apple',
-    
-    # Local apps
-    'users',
-    'charts',
-    'payments',
-    'social_integration', 
-    'loans',
-    'notifications',
-    'locale_utils',
-]
+# Simple INSTALLED_APPS for Railway deployment
+if RAILWAY_ENVIRONMENT or 'RAILWAY_ENVIRONMENT_NAME' in os.environ:
+    INSTALLED_APPS = [
+        'django.contrib.admin',
+        'django.contrib.auth',
+        'django.contrib.contenttypes',
+        'django.contrib.sessions',
+        'django.contrib.messages',
+        'django.contrib.staticfiles',
+        'django.contrib.sites',
+        
+        # Essential third party apps
+        'rest_framework',
+        'corsheaders',
+        
+        # Local apps
+        'users',
+        'charts',
+        'payments',
+        'social_integration', 
+        'loans',
+        'notifications',
+    ]
+else:
+    # Full INSTALLED_APPS for local development
+    INSTALLED_APPS = [
+        'django.contrib.admin',
+        'django.contrib.auth',
+        'django.contrib.contenttypes',
+        'django.contrib.sessions',
+        'django.contrib.messages',
+        'django.contrib.staticfiles',
+        'django.contrib.sites',
+        
+        # Third party apps
+        'rest_framework',
+        'corsheaders',
+        'allauth',
+        'allauth.account',
+        'allauth.socialaccount',
+        'allauth.socialaccount.providers.google',
+        'allauth.socialaccount.providers.apple',
+        
+        # Local apps
+        'users',
+        'charts',
+        'payments',
+        'social_integration', 
+        'loans',
+        'notifications',
+        'locale_utils',
+    ]
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',

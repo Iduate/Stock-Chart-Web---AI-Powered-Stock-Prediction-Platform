@@ -5,3 +5,4 @@ builder = "nixpacks"
 healthcheckPath = "/"
 healthcheckTimeout = 300
 restartPolicyType = "always"
+startCommand = "chmod +x start_simple.sh && ./start_simple.sh"
