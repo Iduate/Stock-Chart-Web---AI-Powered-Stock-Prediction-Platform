@@ -36,7 +36,7 @@ DEBUG = config('DEBUG', default=True, cast=bool)
 # Railway deployment detection
 RAILWAY_ENVIRONMENT = config('RAILWAY_ENVIRONMENT', default=False, cast=bool)
 
-if RAILWAY_ENVIRONMENT:
+if RAILWAY_ENVIRONMENT or 'RAILWAY_ENVIRONMENT_NAME' in os.environ:
     ALLOWED_HOSTS = ['*']
     DEBUG = False
 else:
@@ -113,16 +113,43 @@ WSGI_APPLICATION = 'stockchart_project.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': config('DB_NAME', default='stockchart_web_db'),
-        'USER': config('DB_USER', default='postgres'),
-        'PASSWORD': config('DB_PASSWORD', default='Kulture1$$'),
-        'HOST': config('DB_HOST', default='localhost'),
-        'PORT': config('DB_PORT', default='5432'),
+# Check if we're in Railway environment and configure database accordingly
+if RAILWAY_ENVIRONMENT or 'RAILWAY_ENVIRONMENT_NAME' in os.environ:
+    # Railway deployment - use Railway's PostgreSQL
+    if all(key in os.environ for key in ['PGDATABASE', 'PGUSER', 'PGPASSWORD', 'PGHOST', 'PGPORT']):
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.postgresql',
+                'NAME': os.environ.get('PGDATABASE'),
+                'USER': os.environ.get('PGUSER'),
+                'PASSWORD': os.environ.get('PGPASSWORD'),
+                'HOST': os.environ.get('PGHOST'),
+                'PORT': os.environ.get('PGPORT'),
+                'OPTIONS': {
+                    'sslmode': 'require',
+                },
+            }
+        }
+    else:
+        # Fallback to SQLite for Railway if PostgreSQL vars not available
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.sqlite3',
+                'NAME': BASE_DIR / 'db.sqlite3',
+            }
+        }
+else:
+    # Local development - use configured PostgreSQL or SQLite fallback
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': config('DB_NAME', default='stockchart_web_db'),
+            'USER': config('DB_USER', default='postgres'),
+            'PASSWORD': config('DB_PASSWORD', default='Kulture1$$'),
+            'HOST': config('DB_HOST', default='localhost'),
+            'PORT': config('DB_PORT', default='5432'),
+        }
     }
-}
 
 # Fallback to SQLite for development if PostgreSQL is not available
 # DATABASES = {
@@ -188,6 +215,10 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [
     BASE_DIR / 'static',
 ]
+
+# Add WhiteNoise for Railway static file serving
+if RAILWAY_ENVIRONMENT or 'RAILWAY_ENVIRONMENT_NAME' in os.environ:
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
