@@ -20,10 +20,23 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.conf.urls.i18n import i18n_patterns
 from django.http import JsonResponse
+from django.db import connection
 
 # Health check view for Railway
 def health_check(request):
-    return JsonResponse({"status": "healthy", "service": "Stock Chart Web"})
+    try:
+        # Test database connection
+        connection.ensure_connection()
+        db_status = "connected"
+    except Exception as e:
+        db_status = f"error: {str(e)}"
+    
+    return JsonResponse({
+        "status": "healthy", 
+        "service": "Stock Chart Web",
+        "database": db_status,
+        "debug": settings.DEBUG
+    })
 
 urlpatterns = [
     path('', health_check, name='health_check'),  # Health check for Railway

@@ -78,17 +78,36 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'locale_utils.middleware.SubdomainLanguageMiddleware',  # Custom subdomain language middleware
-    'django.middleware.locale.LocaleMiddleware',  # Add locale middleware
+]
+
+# Add custom middleware only for local development
+if not (RAILWAY_ENVIRONMENT or 'RAILWAY_ENVIRONMENT_NAME' in os.environ):
+    MIDDLEWARE.extend([
+        'locale_utils.middleware.SubdomainLanguageMiddleware',  # Custom subdomain language middleware
+        'django.middleware.locale.LocaleMiddleware',  # Add locale middleware
+    ])
+
+MIDDLEWARE.extend([
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'allauth.account.middleware.AccountMiddleware',
-    'locale_utils.middleware.FreemiumAccessMiddleware',  # Custom freemium access control
+])
+
+# Add more custom middleware only for local development
+if not (RAILWAY_ENVIRONMENT or 'RAILWAY_ENVIRONMENT_NAME' in os.environ):
+    MIDDLEWARE.extend([
+        'locale_utils.middleware.FreemiumAccessMiddleware',  # Custom freemium access control
+    ])
+
+MIDDLEWARE.extend([
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'locale_utils.middleware.MaintenanceModeMiddleware',  # Custom maintenance mode middleware
-]
+])
+
+# Add maintenance mode middleware only for local development
+if not (RAILWAY_ENVIRONMENT or 'RAILWAY_ENVIRONMENT_NAME' in os.environ):
+    MIDDLEWARE.append('locale_utils.middleware.MaintenanceModeMiddleware')  # Custom maintenance mode middleware
 
 ROOT_URLCONF = 'stockchart_project.urls'
 
