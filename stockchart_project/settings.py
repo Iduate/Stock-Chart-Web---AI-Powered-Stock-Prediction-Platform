@@ -164,22 +164,32 @@ WSGI_APPLICATION = 'stockchart_project.wsgi.application'
 # Check if we're in Railway environment and configure database accordingly
 if RAILWAY_ENVIRONMENT or 'RAILWAY_ENVIRONMENT_NAME' in os.environ:
     # Railway deployment - use Railway's PostgreSQL
-    if all(key in os.environ for key in ['PGDATABASE', 'PGUSER', 'PGPASSWORD', 'PGHOST', 'PGPORT']):
+    if any(key in os.environ for key in ['PGDATABASE', 'PGUSER', 'PGPASSWORD', 'PGHOST', 'PGPORT']):
+        # Log database connection attempt
+        print("Connecting to PostgreSQL database with the following credentials:")
+        print(f"DB_NAME: {os.environ.get('PGDATABASE', 'not set')}")
+        print(f"DB_USER: {os.environ.get('PGUSER', 'not set')}")
+        print(f"DB_HOST: {os.environ.get('PGHOST', 'not set')}")
+        print(f"DB_PORT: {os.environ.get('PGPORT', 'not set')}")
+        
         DATABASES = {
             'default': {
                 'ENGINE': 'django.db.backends.postgresql',
-                'NAME': os.environ.get('PGDATABASE'),
-                'USER': os.environ.get('PGUSER'),
-                'PASSWORD': os.environ.get('PGPASSWORD'),
-                'HOST': os.environ.get('PGHOST'),
-                'PORT': os.environ.get('PGPORT'),
+                'NAME': os.environ.get('PGDATABASE', 'postgres'),
+                'USER': os.environ.get('PGUSER', 'postgres'),
+                'PASSWORD': os.environ.get('PGPASSWORD', ''),
+                'HOST': os.environ.get('PGHOST', 'localhost'),
+                'PORT': os.environ.get('PGPORT', '5432'),
                 'OPTIONS': {
-                    'sslmode': 'require',
+                    'sslmode': 'prefer',  # Changed from require to prefer for more flexibility
+                    'connect_timeout': 30,  # Add timeout
                 },
+                'CONN_MAX_AGE': 600,  # Connection pooling
             }
         }
     else:
         # Fallback to SQLite for Railway if PostgreSQL vars not available
+        print("PostgreSQL environment variables not found, falling back to SQLite")
         DATABASES = {
             'default': {
                 'ENGINE': 'django.db.backends.sqlite3',
@@ -187,15 +197,19 @@ if RAILWAY_ENVIRONMENT or 'RAILWAY_ENVIRONMENT_NAME' in os.environ:
             }
         }
 else:
-    # Local development - use configured PostgreSQL or SQLite fallback
+    # Local development with Docker PostgreSQL
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
-            'NAME': config('DB_NAME', default='stockchart_web_db'),
+            'NAME': config('DB_NAME', default='postgres'),
             'USER': config('DB_USER', default='postgres'),
-            'PASSWORD': config('DB_PASSWORD', default='Kulture1$$'),
+            'PASSWORD': config('DB_PASSWORD', default='postgres'),  # Default PostgreSQL password
             'HOST': config('DB_HOST', default='localhost'),
             'PORT': config('DB_PORT', default='5432'),
+            'OPTIONS': {
+                'connect_timeout': 30,  # Add timeout for local development too
+            },
+            'CONN_MAX_AGE': 600,  # Connection pooling
         }
     }
 

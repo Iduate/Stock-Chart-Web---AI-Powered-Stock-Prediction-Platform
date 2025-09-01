@@ -3,6 +3,7 @@ builder = "nixpacks"
 
 [deploy]
 healthcheckPath = "/"
-healthcheckTimeout = 300
+healthcheckTimeout = 600
 restartPolicyType = "always"
 startCommand = "chmod +x start_simple.sh && ./start_simple.sh"
+restartPolicyMaxRetries = 10

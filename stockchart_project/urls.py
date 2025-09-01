@@ -21,6 +21,7 @@ from django.conf.urls.static import static
 from django.conf.urls.i18n import i18n_patterns
 from django.http import JsonResponse
 from django.db import connection
+import os
 
 # Health check view for Railway
 def health_check(request):
@@ -31,10 +32,21 @@ def health_check(request):
     except Exception as e:
         db_status = f"error: {str(e)}"
     
+    # Check for critical environment variables
+    env_vars = {
+        "PORT": os.environ.get("PORT", "Not set"),
+        "PGDATABASE": os.environ.get("PGDATABASE", "Not set"),
+        "PGUSER": os.environ.get("PGUSER", "Not set"),
+        "PGHOST": os.environ.get("PGHOST", "Not set"),
+        "RAILWAY_ENVIRONMENT": os.environ.get("RAILWAY_ENVIRONMENT", "Not set"),
+        "RAILWAY_ENVIRONMENT_NAME": os.environ.get("RAILWAY_ENVIRONMENT_NAME", "Not set"),
+    }
+    
     return JsonResponse({
         "status": "healthy", 
         "service": "Stock Chart Web",
         "database": db_status,
+        "environment": env_vars,
         "debug": settings.DEBUG
     })
 
